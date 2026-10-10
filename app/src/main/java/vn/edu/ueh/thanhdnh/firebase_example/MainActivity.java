@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,7 +19,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
   FirebaseFirestore db;
   Button btAdd, btShow;
-  EditText etName, etPhone;
+  EditText etTitle, etShortDesc; // Đổi biến thành etTitle và etShortDesc
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -35,8 +36,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     db = FirebaseFirestore.getInstance();
     btAdd = findViewById(R.id.btAdd);
     btShow = findViewById(R.id.btShow);
-    etName = findViewById(R.id.etName);
-    etPhone = findViewById(R.id.etPhone);
+
+    // Cập nhật id ánh xạ sang UI mới
+    etTitle = findViewById(R.id.etTitle);
+    etShortDesc = findViewById(R.id.etShortDesc);
+
     btAdd.setOnClickListener(this);
     btShow.setOnClickListener(this);
   }
@@ -44,9 +48,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   @Override
   public void onClick(View view) {
     if (view.getId() == R.id.btAdd) {
-      db.collection("users").add(new User(etName.getText().toString(), etPhone.getText().toString()));
-      etName.setText("");
-      etPhone.setText("");
+      String title = etTitle.getText().toString().trim();
+      String desc = etShortDesc.getText().toString().trim();
+
+      if (title.isEmpty() || desc.isEmpty()) {
+        Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show();
+        return;
+      }
+
+      // Lưu vào collection "articles" với object Article
+      db.collection("articles").add(new Article(title, desc))
+              .addOnSuccessListener(documentReference ->
+                      Toast.makeText(MainActivity.this, "Thêm bài viết thành công!", Toast.LENGTH_SHORT).show())
+              .addOnFailureListener(e ->
+                      Toast.makeText(MainActivity.this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+
+      etTitle.setText("");
+      etShortDesc.setText("");
     } else if (view.getId() == R.id.btShow) {
       Intent intent = new Intent(getBaseContext(), ShowDataActivity.class);
       startActivity(intent);
